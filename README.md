@@ -1,12 +1,12 @@
-# AlphaMiner
+# AlphaProbe
 
 [![PyPI version](https://img.shields.io/pypi/v/alphaprobe)](https://pypi.org/project/alphaprobe/)
 [![Python](https://img.shields.io/pypi/pyversions/alphaprobe)](https://pypi.org/project/alphaprobe/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**低 S/N 時系列データのラグ相関を可視化し、有効な特徴量変換を発見するツール。**
+**時系列の特徴量エンジニアリングを加速するラグ相関探索ライブラリ。**
 
-ターゲット列（例: 将来リターン）と、44 種類の特徴量アグリゲーション（移動平均・RSI・エントロピー等）のラグ相関を一括計算し、bar plot グリッドで可視化します。共有メモリ・ゼロコピー並列エンジンにより、大量の組み合わせを高速に探索できます。
+44 種類の組み込みアグリゲーション（移動平均・RSI・エントロピー・フラクタル次元など）をターゲット変数に対してラグ付きで相関分析し、どの特徴量変換が予測に効くかを一目で把握できます。共有メモリ・ゼロコピー並列エンジンで大規模な探索も高速に実行します。
 
 ---
 
@@ -43,7 +43,7 @@ uv sync --all-extras
 ```python
 import numpy as np
 import pandas as pd
-import alphaprobe as am
+import alphaprobe as ap
 
 np.random.seed(42)
 n = 500
@@ -54,7 +54,7 @@ df = pd.DataFrame({
     "return_1d": np.random.randn(n) * 0.02,
 })
 
-result = am.explore(
+result = ap.explore(
     df,
     target_col="return_1d",
     time_col="date",
@@ -80,10 +80,10 @@ result.plot(save_path="output.png")
 
 ## API
 
-### `am.explore()`
+### `ap.explore()`
 
 ```python
-am.explore(
+ap.explore(
     df,
     *,
     target_col: str,
@@ -242,15 +242,14 @@ am.explore(
 ```
 explore()
   │
-  ├── Phase 1: Aggregation (ProcessPoolExecutor)
-  │     各 (feature, agg) ペアを並列計算
+  ├── Phase 1: Aggregation (SharedMemory + ProcessPoolExecutor)
+  │     入力を共有メモリにパック → ワーカーが読み取り → 結果を共有メモリに直接書き込み
   │
   └── Phase 2: Correlation (SharedMemory + ProcessPoolExecutor)
-        結果を SharedMemory にパック → ゼロコピーでワーカーが参照
-        numpy スライスでラグ計算（shift() 不使用）
+        Phase 1 の出力共有メモリをそのまま再利用 → ゼロコピーでラグ相関計算
 ```
 
-- **共有メモリ・ゼロコピー**: シリアライズもコピーも一切なし
+- **全フェーズ共有メモリ**: Phase 1 / Phase 2 ともに pickle シリアライズなし
 - **プラグインパターン**: `@register_aggregation` / `@register_correlation` デコレータで拡張可能
 - **スライスベース lag**: `agg[:n-lag]` / `target[lag:]` の numpy ビュー
 
@@ -271,44 +270,16 @@ class MyAggregation(Aggregation):
 
 ---
 
-## Build
+## Release
 
-```bash
-# ビルド
-uv build
-
-# dist/ に以下が生成される
-#   alphaprobe-X.Y.Z.tar.gz
-#   alphaprobe-X.Y.Z-py3-none-any.whl
-```
-
-## Release (自動)
-
-main ブランチへの push（PR マージ含む）で自動的にリリースされます:
+main ブランチへの push で自動的にリリースされます:
 
 1. GitHub Actions がテストを実行
-2. テスト通過後、patch バージョンを自動インクリメント（例: `0.1.0` → `0.1.1`）
+2. テスト通過後、patch バージョンを自動インクリメント（例: `0.1.3` → `0.1.4`）
 3. バージョンバンプを commit & tag して push
 4. `uv build` → PyPI に Trusted Publishing で自動公開
 
-### 初回セットアップ（1 回だけ必要）
-
-1. [PyPI](https://pypi.org) でアカウント作成
-2. **Publishing** → **Add a new pending publisher**:
-   - Owner: `kyo219`
-   - Repository: `alphaprobe`
-   - Workflow: `publish.yml`
-   - Environment: `pypi`
-3. GitHub リポジトリの **Settings** → **Environments** で `pypi` environment を作成
-
-### 手動リリース（任意）
-
-```bash
-# バージョンを手動で上げる場合
-# pyproject.toml と src/alphaprobe/__init__.py の version を更新
-git tag v0.2.0
-git push origin main --tags
-```
+デプロイせずに push したい場合は、コミットメッセージに `[skip deploy]` を含めてください。テストのみ実行されます。
 
 ---
 
