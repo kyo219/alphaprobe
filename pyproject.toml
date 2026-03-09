@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "alphaminer"
+name = "alphascope"
 version = "0.1.1"
 description = "Visualize lag-correlations between target and aggregated features for low S/N time-series data"
 readme = "README.md"
@@ -34,8 +34,8 @@ dependencies = [
 dev = ["pytest>=7.0"]
 
 [project.urls]
-Homepage = "https://github.com/kyo219/alphaminer"
-Repository = "https://github.com/kyo219/alphaminer"
+Homepage = "https://github.com/kyo219/alphascope"
+Repository = "https://github.com/kyo219/alphascope"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/alphaminer"]
+packages = ["src/alphascope"]

@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from alphaminer.aggregations._base import Aggregation, register_aggregation
+from alphascope.aggregations._base import Aggregation, register_aggregation
 
 if TYPE_CHECKING:
     import pandas as pd

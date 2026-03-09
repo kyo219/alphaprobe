@@ -14,7 +14,7 @@ resolution-markers = [
 ]
 
 [[package]]
-name = "alphaminer"
+name = "alphascope"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

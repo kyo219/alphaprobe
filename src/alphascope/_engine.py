@@ -25,16 +25,16 @@ from rich.progress import (
     TimeElapsedColumn,
 )
 
-from alphaminer._parser import parse_agg
-from alphaminer._shared import (
+from alphascope._parser import parse_agg
+from alphascope._shared import (
     SharedBlock,
     create_empty_shared_block,
     create_shared_block,
     open_shared_block,
 )
-from alphaminer._types import CorrResult, ExploreResult
-from alphaminer.aggregations import get_aggregation
-from alphaminer.correlations import get_correlation
+from alphascope._types import CorrResult, ExploreResult
+from alphascope.aggregations import get_aggregation
+from alphascope.correlations import get_correlation
 
 # ── Per-worker globals (set once via ProcessPoolExecutor initializer) ───
 _w_shm_in = None

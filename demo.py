@@ -6,7 +6,7 @@ matplotlib.use("Agg")
 import numpy as np
 import pandas as pd
 
-import alphaminer as am
+import alphascope as am
 
 
 def main():

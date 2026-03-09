@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 from scipy import stats
 
-from alphaminer.correlations._base import Correlation, register_correlation
+from alphascope.correlations._base import Correlation, register_correlation
 
 
 @register_correlation("spearman")
