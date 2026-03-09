@@ -32,6 +32,21 @@ def _init_worker(meta: SharedBlock) -> None:
     _w_shm, _w_buf = open_shared_block(meta)
 
 
+def _compute_agg(
+    feature_values: np.ndarray,
+    target_values: np.ndarray,
+    agg_name: str,
+    window: int,
+    extra: int | None,
+) -> np.ndarray:
+    """Worker function for parallel Phase 1 aggregation."""
+    series = pd.Series(feature_values)
+    target = pd.Series(target_values)
+    agg_impl = get_aggregation(agg_name)
+    result = agg_impl.apply(series, window, target=target, extra=extra)
+    return result.to_numpy(dtype=np.float64)
+
+
 def _compute_group(
     feat: str,
     agg_label: str,
@@ -124,21 +139,67 @@ def explore(
     target_np = target_series.to_numpy(dtype=np.float64)
     n = len(target_np)
 
-    # ── Phase 1: Aggregation (sequential — pandas rolling is vectorised) ─
+    # ── Phase 1: Aggregation (parallel) ─────────────────────────────
     agg_specs = [parse_agg(a) for a in agg]
-    arrays: list[np.ndarray] = [target_np]  # index 0 = target
+
+    # Pre-assign indices so order is deterministic
+    tasks: list[tuple[str, str, int, str, int, int | None]] = []
     index_map: dict[tuple[str, str], int] = {}
     idx = 1
     for feat in feature_cols:
         for spec in agg_specs:
-            agg_impl = get_aggregation(spec.name)
-            s = agg_impl.apply(df[feat], spec.window, target=target_series, extra=spec.extra)
-            arrays.append(s.to_numpy(dtype=np.float64))
-            index_map[(feat, str(spec))] = idx
+            spec_str = str(spec)
+            index_map[(feat, spec_str)] = idx
+            tasks.append((feat, spec_str, idx, spec.name, spec.window, spec.extra))
             idx += 1
 
+    n_agg_tasks = len(tasks)
+    n_workers = max_workers if max_workers is not None else min(os.cpu_count() or 4, n_agg_tasks)
+    arrays: list[np.ndarray | None] = [target_np] + [None] * n_agg_tasks
+
+    if show_progress:
+        with Progress(
+            TextColumn("[bold green]{task.description}"),
+            BarColumn(),
+            MofNCompleteColumn(),
+            TimeElapsedColumn(),
+        ) as progress:
+            tid = progress.add_task("Aggregating", total=n_agg_tasks)
+            with ProcessPoolExecutor(max_workers=n_workers) as pool:
+                futures = {
+                    pool.submit(
+                        _compute_agg,
+                        df[feat].to_numpy(dtype=np.float64),
+                        target_np,
+                        agg_name,
+                        window,
+                        extra,
+                    ): task_idx
+                    for feat, _spec_str, task_idx, agg_name, window, extra in tasks
+                }
+                for fut in as_completed(futures):
+                    task_idx = futures[fut]
+                    arrays[task_idx] = fut.result()
+                    progress.advance(tid)
+    else:
+        with ProcessPoolExecutor(max_workers=n_workers) as pool:
+            futures = {
+                pool.submit(
+                    _compute_agg,
+                    df[feat].to_numpy(dtype=np.float64),
+                    target_np,
+                    agg_name,
+                    window,
+                    extra,
+                ): task_idx
+                for feat, _spec_str, task_idx, agg_name, window, extra in tasks
+            }
+            for fut in as_completed(futures):
+                task_idx = futures[fut]
+                arrays[task_idx] = fut.result()
+
     # ── Phase 2: Pack into shared memory & correlate in parallel ────
-    shm, meta = create_shared_block(arrays)
+    shm, meta = create_shared_block(arrays)  # type: ignore[arg-type]
     del arrays  # free temporary list; data lives in shm now
 
     agg_labels = [str(s) for s in agg_specs]

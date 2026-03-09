@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 def plot_results(
     result: ExploreResult,
     figsize: tuple[float, float] | None = None,
+    save_path: str | None = None,
 ) -> None:
     """Render ACF-style stem-plot grid: rows=features, cols=aggs."""
     features = result.feature_cols
@@ -46,6 +47,14 @@ def plot_results(
             )
             markerline.set_markersize(4)
 
+            # lag 0 と 1 の間に区切り線を入れる
+            if 0 in lags_vals and len(lags_vals) > 1:
+                first_nonzero = min(l for l in lags_vals if l > 0)
+                ax.axvline(
+                    (0 + first_nonzero) / 2,
+                    color="red", linewidth=0.8, linestyle="--", alpha=0.5,
+                )
+
             ax.set_title(f"{feat} | {agg_label}", fontsize=9)
             if i == nrows - 1:
                 ax.set_xlabel("Lag")
@@ -57,4 +66,8 @@ def plot_results(
         fontsize=12,
         fontweight="bold",
     )
+    if save_path is not None:
+        import os
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        fig.savefig(save_path, dpi=150, bbox_inches="tight")
     plt.show()

@@ -4,8 +4,8 @@ import re
 
 from alphaminer._types import AggSpec
 
-_PATTERN_2 = re.compile(r"^([A-Za-z]+)_(\d+)$")
-_PATTERN_3 = re.compile(r"^([A-Za-z]+)_(\d+)_(\d+)$")
+_PATTERN_2 = re.compile(r"^([A-Za-z][A-Za-z0-9]*)_(\d+)$")
+_PATTERN_3 = re.compile(r"^([A-Za-z][A-Za-z0-9]*)_(\d+)_(\d+)$")
 
 _EXTRA_PARAM_AGGS = frozenset(
     {"ACF", "PACF", "MI", "SAMPEN", "APEN", "PERMEN", "FRACDIFF", "QUANTILE"}
