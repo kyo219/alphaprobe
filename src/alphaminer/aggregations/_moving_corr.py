@@ -13,7 +13,7 @@ class MovingCorrelation(Aggregation):
     """Rolling Pearson correlation between a feature and the target."""
 
     def apply(
-        self, series: pd.Series, window: int, *, target: pd.Series | None = None
+        self, series: pd.Series, window: int, *, target: pd.Series | None = None, extra: int | None = None,
     ) -> pd.Series:
         if target is None:
             raise ValueError("MC (Moving Correlation) requires a target series.")

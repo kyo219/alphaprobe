@@ -13,6 +13,6 @@ class MovingAverage(Aggregation):
     """Simple moving average."""
 
     def apply(
-        self, series: pd.Series, window: int, *, target: pd.Series | None = None
+        self, series: pd.Series, window: int, *, target: pd.Series | None = None, extra: int | None = None,
     ) -> pd.Series:
         return series.rolling(window=window, min_periods=window).mean()

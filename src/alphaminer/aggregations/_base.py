@@ -33,7 +33,12 @@ class Aggregation(ABC):
 
     @abstractmethod
     def apply(
-        self, series: pd.Series, window: int, *, target: pd.Series | None = None
+        self,
+        series: pd.Series,
+        window: int,
+        *,
+        target: pd.Series | None = None,
+        extra: int | None = None,
     ) -> pd.Series:
         """Apply the aggregation to *series* with the given *window*.
 
@@ -45,4 +50,6 @@ class Aggregation(ABC):
             Rolling window size.
         target : pd.Series | None
             Target column, required for cross-feature aggregations like MC.
+        extra : int | None
+            Extra parameter for aggregations that need it (e.g. lag for ACF).
         """

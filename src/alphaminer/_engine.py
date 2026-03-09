@@ -132,7 +132,7 @@ def explore(
     for feat in feature_cols:
         for spec in agg_specs:
             agg_impl = get_aggregation(spec.name)
-            s = agg_impl.apply(df[feat], spec.window, target=target_series)
+            s = agg_impl.apply(df[feat], spec.window, target=target_series, extra=spec.extra)
             arrays.append(s.to_numpy(dtype=np.float64))
             index_map[(feat, str(spec))] = idx
             idx += 1

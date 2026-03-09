@@ -7,12 +7,15 @@ import pandas as pd
 
 @dataclass(frozen=True)
 class AggSpec:
-    """Parsed aggregation specification, e.g. AggSpec("MA", 5)."""
+    """Parsed aggregation specification, e.g. AggSpec("MA", 5) or AggSpec("ACF", 50, extra=3)."""
 
     name: str
     window: int
+    extra: int | None = None
 
     def __str__(self) -> str:
+        if self.extra is not None:
+            return f"{self.name}_{self.extra}_{self.window}"
         return f"{self.name}_{self.window}"
 
 

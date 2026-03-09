@@ -28,7 +28,7 @@ result = am.explore(
     target_col="return_1d",
     time_col="date",
     feature_cols=["close", "volume"],
-    agg=["MA_5", "MA_10", "MC_30"],
+    agg=["MA_5", "STD_10", "RSI_14", "EMA_20", "ACF_1_30"],
     lags=list(range(11)),
     corr_method="pearson",
 )
@@ -47,7 +47,7 @@ result.plot()          # re-render the subplot grid
 | `target_col` | `str` | Target column (e.g. 1-period forward return) |
 | `time_col` | `str` | Time/date column for sorting |
 | `feature_cols` | `list[str]` | Feature columns to explore |
-| `agg` | `list[str]` | Aggregation specs: `"NAME_WINDOW"` (e.g. `"MA_5"`, `"MC_30"`) |
+| `agg` | `list[str]` | Aggregation specs (see format below) |
 | `lags` | `list[int]` | Lag values to compute |
 | `corr_method` | `str` | `"pearson"`, `"spearman"`, or `"chatterjee"` |
 | `max_workers` | `int \| None` | Process pool size (defaults to CPU count) |
@@ -55,12 +55,115 @@ result.plot()          # re-render the subplot grid
 
 Returns an `ExploreResult` with `.plot()` and `.to_dataframe()` methods.
 
-## Built-in Aggregations
+## Aggregation Spec Format
 
-| Code | Name | Description |
+Two formats are supported:
+
+| Format | Example | Description |
 |---|---|---|
-| `MA` | Moving Average | `series.rolling(window).mean()` |
-| `MC` | Moving Correlation | `series.rolling(window).corr(target)` |
+| `NAME_WINDOW` | `MA_5`, `RSI_14` | Standard aggregations with a rolling window |
+| `NAME_EXTRA_WINDOW` | `ACF_3_50`, `FRACDIFF_5_20` | Aggregations that require an extra parameter |
+
+## Built-in Aggregations (44 types)
+
+### Basic Rolling (9)
+
+| Code | Name | Formula |
+|---|---|---|
+| `MA` | Moving Average | `rolling(W).mean()` |
+| `SUM` | Rolling Sum | `rolling(W).sum()` |
+| `MEDIAN` | Rolling Median | `rolling(W).median()` |
+| `STD` | Rolling Std Dev | `rolling(W).std()` |
+| `VAR` | Rolling Variance | `rolling(W).var()` |
+| `MAX` | Rolling Max | `rolling(W).max()` |
+| `MIN` | Rolling Min | `rolling(W).min()` |
+| `RANGE` | Rolling Range | `rolling(W).max() - rolling(W).min()` |
+| `SKEW` | Rolling Skewness | `rolling(W).skew()` |
+| `KURT` | Rolling Kurtosis | `rolling(W).kurt()` |
+
+### Rank & Normalisation (4)
+
+| Code | Name | Formula |
+|---|---|---|
+| `RANK` | Rolling Rank | Percentile rank of latest value in window |
+| `ZSCORE` | Rolling Z-Score | `(x - rolling.mean()) / rolling.std()` |
+| `CV` | Coefficient of Variation | `rolling.std() / rolling.mean()` |
+| `NORMDEV` | Normality Deviation | `abs(skew) + abs(kurt - 3)` |
+
+### Momentum (4)
+
+| Code | Name | Formula |
+|---|---|---|
+| `MOM` | Momentum | `x[t] - x[t-W]` |
+| `ROC` | Rate of Change | `(x[t] / x[t-W] - 1) * 100` |
+| `MEANREV` | Mean Reversion | Negative autocorrelation of deviations |
+| `TRENDSIG` | Trend Signal | T-statistic of rolling linear regression |
+
+### EMA Family (5)
+
+| Code | Name | Formula |
+|---|---|---|
+| `EMA` | Exponential MA | `ewm(span=W).mean()` |
+| `DEMA` | Double EMA | `2*EMA - EMA(EMA)` |
+| `TEMA` | Triple EMA | `3*EMA - 3*EMA(EMA) + EMA(EMA(EMA))` |
+| `WMA` | Weighted MA | Linearly weighted moving average |
+| `EWMSTD` | EWM Std Dev | `ewm(span=W).std()` |
+
+### Technical (4)
+
+| Code | Name | Formula |
+|---|---|---|
+| `RSI` | Relative Strength Index | Gain/loss ratio with EWM smoothing |
+| `BPOS` | Bollinger Position | `(x - MA) / (2 * STD)` |
+| `RVOL` | Realised Volatility | `diff().rolling(W).std()` |
+| `ARCH` | ARCH Effect | `(diff()²).rolling(W).mean()` |
+
+### Regression (2)
+
+| Code | Name | Formula |
+|---|---|---|
+| `LSLOPE` | Linear Slope | Vectorised rolling OLS slope |
+| `LR2` | Linear R² | Rolling R-squared of linear regression |
+
+### Correlation-based (3) — requires `extra`
+
+| Code | Name | Extra | Example |
+|---|---|---|---|
+| `MC` | Moving Correlation | — | `MC_30` (requires target) |
+| `ACF` | Autocorrelation | lag | `ACF_3_50` → lag=3, window=50 |
+| `PACF` | Partial Autocorrelation | lag | `PACF_5_50` → lag=5, window=50 |
+| `MI` | Mutual Information | bins | `MI_10_50` → 10 bins, window=50 (requires target) |
+
+### Entropy (5)
+
+| Code | Name | Extra | Example |
+|---|---|---|---|
+| `ENTROPY` | Shannon Entropy | — | `ENTROPY_50` |
+| `SPECENT` | Spectral Entropy | — | `SPECENT_32` |
+| `SAMPEN` | Sample Entropy | m (embed dim) | `SAMPEN_2_50` → m=2, window=50 |
+| `APEN` | Approximate Entropy | m (embed dim) | `APEN_2_50` → m=2, window=50 |
+| `PERMEN` | Permutation Entropy | order | `PERMEN_3_50` → order=3, window=50 |
+
+### Complexity (3)
+
+| Code | Name | Formula |
+|---|---|---|
+| `LZC` | Lempel-Ziv Complexity | Binary sequence complexity |
+| `HURST` | Hurst Exponent | Rescaled range (R/S) analysis |
+| `DFA` | Detrended Fluctuation Analysis | DFA scaling exponent |
+
+### Fractional & Quantile (2) — requires `extra`
+
+| Code | Name | Extra | Example |
+|---|---|---|---|
+| `FRACDIFF` | Fractional Differencing | d×10 | `FRACDIFF_3_50` → d=0.3, window=50 |
+| `QUANTILE` | Rolling Quantile | percentile | `QUANTILE_25_50` → 25th %ile, window=50 |
+
+### Identity (1)
+
+| Code | Name | Formula |
+|---|---|---|
+| `RAW` | Raw (no-op) | Returns series as-is |
 
 ## Built-in Correlation Methods
 
@@ -75,16 +178,16 @@ Returns an `ExploreResult` with `.plot()` and `.to_dataframe()` methods.
 Create a file and use the `@register_aggregation` decorator:
 
 ```python
-# src/alphaminer/aggregations/_ema.py
+# src/alphaminer/aggregations/_my_agg.py
 from alphaminer.aggregations._base import Aggregation, register_aggregation
 
-@register_aggregation("EMA")
-class ExponentialMovingAverage(Aggregation):
-    def apply(self, series, window, *, target=None):
-        return series.ewm(span=window).mean()
+@register_aggregation("MYAGG")
+class MyAggregation(Aggregation):
+    def apply(self, series, window, *, target=None, extra=None):
+        return series.rolling(window).mean()  # your logic here
 ```
 
-Then add the import in `aggregations/__init__.py`. Use it as `"EMA_10"`.
+Then add the import in `aggregations/__init__.py`. Use it as `"MYAGG_10"`.
 
 ## Architecture
 
@@ -124,7 +227,7 @@ result = am.explore(
     target_col="return_1d",
     time_col="date",
     feature_cols=["close", "volume"],
-    agg=["MA_5", "MA_10", "MC_30"],
+    agg=["MA_5", "STD_10", "RSI_14", "EMA_20", "ACF_1_30"],
     lags=list(range(11)),
     corr_method="pearson",  # "spearman", "chatterjee" も可
 )
@@ -133,12 +236,49 @@ result.to_dataframe()  # DataFrameとして取得
 result.plot()          # 再描画
 ```
 
-## 組み込みアグリゲーション
+## アグリゲーション引数フォーマット
 
-| コード | 名前 | 説明 |
+| 形式 | 例 | 説明 |
 |---|---|---|
-| `MA` | 移動平均 | `series.rolling(window).mean()` |
-| `MC` | 移動相関 | `series.rolling(window).corr(target)` |
+| `NAME_WINDOW` | `MA_5`, `RSI_14` | ローリングウィンドウのみ |
+| `NAME_EXTRA_WINDOW` | `ACF_3_50`, `FRACDIFF_5_20` | 追加パラメータが必要なアグリゲーション |
+
+## 組み込みアグリゲーション (全44種)
+
+### 基本ローリング (9)
+
+| コード | 名前 | 計算式 |
+|---|---|---|
+| `MA` | 移動平均 | `rolling(W).mean()` |
+| `SUM` | ローリング合計 | `rolling(W).sum()` |
+| `MEDIAN` | ローリング中央値 | `rolling(W).median()` |
+| `STD` | ローリング標準偏差 | `rolling(W).std()` |
+| `VAR` | ローリング分散 | `rolling(W).var()` |
+| `MAX` / `MIN` | ローリング最大/最小 | `rolling(W).max()` / `.min()` |
+| `RANGE` | ローリングレンジ | `max - min` |
+| `SKEW` / `KURT` | ローリング歪度/尖度 | `rolling(W).skew()` / `.kurt()` |
+
+### ランク・正規化 (4): `RANK`, `ZSCORE`, `CV`, `NORMDEV`
+
+### モメンタム (4): `MOM`, `ROC`, `MEANREV`, `TRENDSIG`
+
+### EMAファミリー (5): `EMA`, `DEMA`, `TEMA`, `WMA`, `EWMSTD`
+
+### テクニカル (4): `RSI`, `BPOS`, `RVOL`, `ARCH`
+
+### 回帰 (2): `LSLOPE`, `LR2`
+
+### 相関ベース (3): `ACF_lag_W`, `PACF_lag_W`, `MI_bins_W`
+
+### エントロピー (5): `ENTROPY`, `SPECENT`, `SAMPEN_m_W`, `APEN_m_W`, `PERMEN_order_W`
+
+### 複雑度 (3): `LZC`, `HURST`, `DFA`
+
+### 分数・分位 (2): `FRACDIFF_d10_W`, `QUANTILE_q_W`
+
+### ID (1): `RAW`
+
+詳細は英語セクションの表を参照してください。
 
 ## 組み込み相関手法
 
@@ -147,17 +287,6 @@ result.plot()          # 再描画
 | `pearson` | ピアソン積率相関 |
 | `spearman` | スピアマン順位相関 |
 | `chatterjee` | Chatterjeeのξ係数（非線形依存も検出） |
-
-## カスタムアグリゲーションの追加
-
-`@register_aggregation` デコレータ付きクラスを1ファイル作成し、`__init__.py` にimportを追加するだけ:
-
-```python
-@register_aggregation("EMA")
-class ExponentialMovingAverage(Aggregation):
-    def apply(self, series, window, *, target=None):
-        return series.ewm(span=window).mean()
-```
 
 ## アーキテクチャ
 
