@@ -23,6 +23,23 @@ class SharedBlock:
     dtype: str  # e.g. "float64"
 
 
+def create_empty_shared_block(
+    n_arrays: int, n_rows: int
+) -> tuple[SharedMemory, SharedBlock, np.ndarray]:
+    """Allocate a shared memory block without copying data.
+
+    Returns ``(shm_handle, metadata, buf)`` where ``buf`` is a writable
+    2-D numpy view of shape ``(n_arrays, n_rows)``.  The caller **must**
+    call ``shm.close()`` and ``shm.unlink()`` when finished.
+    """
+    dtype = np.float64
+    itemsize = np.dtype(dtype).itemsize
+    shm = SharedMemory(create=True, size=n_arrays * n_rows * itemsize)
+    buf = np.ndarray((n_arrays, n_rows), dtype=dtype, buffer=shm.buf)
+    meta = SharedBlock(shm.name, n_rows, n_arrays, np.dtype(dtype).str)
+    return shm, meta, buf
+
+
 def create_shared_block(arrays: list[np.ndarray]) -> tuple[SharedMemory, SharedBlock]:
     """Pack equal-length 1-D arrays into a single shared memory segment.
 
