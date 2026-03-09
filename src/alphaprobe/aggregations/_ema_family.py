@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from alpharadar.aggregations._base import Aggregation, register_aggregation
+from alphaprobe.aggregations._base import Aggregation, register_aggregation
 
 if TYPE_CHECKING:
     import pandas as pd

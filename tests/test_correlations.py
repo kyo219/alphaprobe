@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from alpharadar.correlations import get_correlation
+from alphaprobe.correlations import get_correlation
 
 
 class TestPearson:

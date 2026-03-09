@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from alpharadar.aggregations import get_aggregation
+from alphaprobe.aggregations import get_aggregation
 
 
 class TestMovingAverage:
@@ -49,7 +49,7 @@ class TestRegistry:
             get_aggregation("NONEXISTENT")
 
     def test_all_44_registered(self):
-        from alpharadar.aggregations._base import _REGISTRY
+        from alphaprobe.aggregations._base import _REGISTRY
         assert len(_REGISTRY) == 44
 
 

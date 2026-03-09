@@ -60,6 +60,6 @@ class ExploreResult:
 
     def plot(self, figsize: tuple[float, float] | None = None, save_path: str | None = None) -> None:
         """Render ACF-style subplot grid."""
-        from alpharadar._plot import plot_results
+        from alphaprobe._plot import plot_results
 
         plot_results(self, figsize=figsize, save_path=save_path)

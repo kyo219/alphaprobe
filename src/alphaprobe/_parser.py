@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 
-from alpharadar._types import AggSpec
+from alphaprobe._types import AggSpec
 
 _PATTERN_2 = re.compile(r"^([A-Za-z][A-Za-z0-9]*)_(\d+)$")
 _PATTERN_3 = re.compile(r"^([A-Za-z][A-Za-z0-9]*)_(\d+)_(\d+)$")

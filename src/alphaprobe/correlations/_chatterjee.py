@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from alpharadar.correlations._base import Correlation, register_correlation
+from alphaprobe.correlations._base import Correlation, register_correlation
 
 
 @register_correlation("chatterjee")
