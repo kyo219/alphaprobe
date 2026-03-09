@@ -67,7 +67,7 @@ def main():
     )
 
     # PNG保存
-    output_path = "sample/output/lag_correlation_grid.png"
+    output_path = "demo_output.png"
     result.plot(save_path=output_path)
     print(f"\nSaved: {output_path}")
 
