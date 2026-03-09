@@ -25,16 +25,16 @@ from rich.progress import (
     TimeElapsedColumn,
 )
 
-from alphascope._parser import parse_agg
-from alphascope._shared import (
+from alpharadar._parser import parse_agg
+from alpharadar._shared import (
     SharedBlock,
     create_empty_shared_block,
     create_shared_block,
     open_shared_block,
 )
-from alphascope._types import CorrResult, ExploreResult
-from alphascope.aggregations import get_aggregation
-from alphascope.correlations import get_correlation
+from alpharadar._types import CorrResult, ExploreResult
+from alpharadar.aggregations import get_aggregation
+from alpharadar.correlations import get_correlation
 
 # ── Per-worker globals (set once via ProcessPoolExecutor initializer) ───
 _w_shm_in = None

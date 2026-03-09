@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from alphascope.aggregations._base import Aggregation, register_aggregation
+from alpharadar.aggregations._base import Aggregation, register_aggregation
 
 if TYPE_CHECKING:
     import pandas as pd

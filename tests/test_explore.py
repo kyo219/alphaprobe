@@ -5,9 +5,9 @@ import pytest
 
 matplotlib.use("Agg")  # Non-interactive backend for testing
 
-import alphascope as am
-from alphascope._parser import parse_agg
-from alphascope._types import AggSpec
+import alpharadar as am
+from alpharadar._parser import parse_agg
+from alpharadar._types import AggSpec
 
 
 class TestParser:

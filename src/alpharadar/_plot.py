@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
 
 if TYPE_CHECKING:
-    from alphascope._types import ExploreResult
+    from alpharadar._types import ExploreResult
 
 
 def plot_results(

@@ -14,8 +14,8 @@ resolution-markers = [
 ]
 
 [[package]]
-name = "alphascope"
-version = "0.1.0"
+name = "alpharadar"
+version = "0.1.1"
 source = { editable = "." }
 dependencies = [
     { name = "matplotlib" },

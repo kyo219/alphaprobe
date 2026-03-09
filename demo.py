@@ -6,7 +6,7 @@ matplotlib.use("Agg")
 import numpy as np
 import pandas as pd
 
-import alphascope as am
+import alpharadar as am
 
 
 def main():
