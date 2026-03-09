@@ -35,6 +35,14 @@ class TestMovingCorrelation:
         np.testing.assert_almost_equal(result.dropna().iloc[0], 1.0)
 
 
+class TestRaw:
+    def test_passthrough(self):
+        s = pd.Series([1.0, 2.0, 3.0, 4.0, 5.0])
+        raw = get_aggregation("RAW")
+        result = raw.apply(s, window=999)
+        pd.testing.assert_series_equal(result, s)
+
+
 class TestRegistry:
     def test_unknown_raises(self):
         with pytest.raises(KeyError, match="Unknown aggregation"):
